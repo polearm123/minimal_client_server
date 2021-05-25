@@ -13,14 +13,14 @@ connected = True
 while connected:
 
     string = input("enter a message to send to the server\n")
-    string_buffer = bytes(string, FORMAT)
+    string_buffer = string.encode(FORMAT)
     length = str(len(string_buffer))
-    length_buffer = bytes(length, FORMAT)
+    length_buffer = length.encode(FORMAT)
    
-    client_socket.sendall(length_buffer)
-    client_socket.sendall(string_buffer)
-    server_response = client_socket.recv(int(length)).decode(FORMAT)
+    client_socket.send(length_buffer)
+    client_socket.send(string_buffer)
 
+    server_response = client_socket.recv(int(length)).decode(FORMAT)
 
     print(f'server responds: {server_response}')
     
