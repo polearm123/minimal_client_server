@@ -6,7 +6,7 @@ import pickle
 
 
 HEADER = 8 #pre-content of a message that specifies the num6er of 6ytes in the message
-PORT = 5059
+PORT = 5054
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER,PORT)
 FORMAT = 'utf-8'
@@ -37,16 +37,22 @@ def handle_client(conn,addr):
 
     
         if msg == PING_MESSAGE:
-            print("ping message received")
             chat_thread = threading.Thread(target = serve_ping_request, args = (conn,addr)) 
             chat_thread.start()
             continue
 
 
         if msg == DISCONNECT_MESSAGE: 
+            disconnect_message = "You have now been disconnected".encode(FORMAT)
+            disconnect_message_header = str(len(disconnect_message)).encode(FORMAT)
+            diconnect_message_header = b'' * (HEADER - len(disconnect_message_header))
+            conn.send(disconnect_message_header)
+            conn.send(disconnect_message)
             connected = False
+            
 
         chat_history.append((msg,addr))
+
         print(f'message received from {addr} is:  {msg}')
         print(f'current chat is {chat_history}')
 
@@ -56,17 +62,13 @@ def handle_client(conn,addr):
 
 #returns the entire chat to the respective client
 def serve_ping_request(conn,addr):
+
     pickled_chat = pickle.dumps(chat_history)
     pickled_chat_header = str((len(pickled_chat))).encode(FORMAT)
     pickled_chat_header += b' ' *(HEADER - len(pickled_chat_header)) #padding the header
-    
-
     conn.send(pickled_chat_header)
     conn.send(pickled_chat)
     
-
-
-#resets the chat history
 
 #prints entire chat list
 def print_chat():
@@ -78,6 +80,11 @@ def print_chat():
 def update_chat(msg,addr):
 
     return chat_history.append((msg,addr))
+
+# def handle_server_commands(server_command):
+
+#     if server_command == "?WIPE":
+
 
 
 #starts the server, accepts connections and starts a new thread for each client that connects
