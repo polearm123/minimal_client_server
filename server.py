@@ -6,7 +6,7 @@ import pickle
 
 
 HEADER = 8 #pre-content of a message that specifies the num6er of 6ytes in the message
-PORT = 5054
+PORT = 5051
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDRESS = (SERVER,PORT)
 FORMAT = 'utf-8'

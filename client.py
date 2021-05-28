@@ -2,7 +2,7 @@ import socket,pickle,threading,time
 
 HEADER = 8
 HOST = socket.gethostbyname(socket.gethostname())
-PORT = 5054
+PORT = 5051
 
 FORMAT = 'utf-8'
 
