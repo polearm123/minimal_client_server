@@ -17,19 +17,19 @@ local_chat_history = list()
 class ChatWorker(QObject):
 
     finished = pyqtSignal()
-    chat = pyqtSignal(list())
+    chat = pyqtSignal(list)
     
 
     def __init__(self,client_socket,connected,message):
         super().__init__()
         self.client_socket = client_socket
         self.connected = connected
+        self.message = message
         
 
     def run(self):
         """Long-running task."""
         if self.connected:
-            self.message = message
             string_buffer = self.message.encode(FORMAT)
             length = str(len(string_buffer))
             length_buffer = length.encode(FORMAT)
@@ -47,6 +47,8 @@ class ChatWorker(QObject):
     def retrieve_chat(self):
         print("inside retrieve chat")
         updated_chat = self.ping()
+        print("updated chat",type(updated_chat))
+        
         self.chat.emit(updated_chat)
         self.finished.emit()
 
@@ -67,6 +69,8 @@ class ChatWorker(QObject):
         if compared_chat:
             # nice_tuples(compared_chat)
             return compared_chat
+        else:
+            return []
 
             
     #prints chat out in nice format
@@ -90,7 +94,7 @@ class ChatWorker(QObject):
         new_messages_list = list()
 
         if local_chat_history == server_chat:
-            return
+            return []
 
         else:
             for i in server_chat:
@@ -99,6 +103,8 @@ class ChatWorker(QObject):
 
         self.update_local_chat(server_chat)#updates the local chat to be equal to that of the server after retrieving new messages
 
+
+        print("new message list is:" , new_messages_list)
         return new_messages_list
 
 
@@ -126,15 +132,19 @@ class MainWindow(qtw.QWidget):
         #change font of the label
 
         #create a text input
+
         text_input = qtw.QLineEdit()
         text_input.setObjectName("text_field")
         text_input.setText("")
+        self.chat_frame = QListWidget()
 
         print("at timer")
 
         self.timer = QTimer()
+        
         self.timer.timeout.connect(self.retrieve_server_chat)
-        self.timer.start(50)
+        self.timer.start(1000)
+        
 
         print("after time")
 
@@ -149,71 +159,28 @@ class MainWindow(qtw.QWidget):
         
         self.layout().addWidget(text_input)
         self.layout().addWidget(send_button)
-        self.layout().addWidget(chat_frame)
+        
 
-        # self.show()
-        print("at show")
+        self.show()
         
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        #sets time to respond to the updated chat caused by the client pings
-        # timer = QtCore.QTimer()
-        # timer.timeout.connect(update_gui_chat_label)
-        # timer.start(10000)
-
-        
         #sets the showing label to the text input and clears the text input
         def send():
             self.send_values(text_input.text())
             text_input.setText("")
 
 
-        #response to the timer signal, calls another function that deals with retrieving the server chat(setting up a thread) and printing onto the chatframe
-
-
-        #removes all widget labels and replaces them with the updated chat if there is an updated chat available
-        def update_gui_chat_label():
-            if not chat_frame.children():
-                return
-
-            else:
-                counter = 0
-                for i in local_chat_history:
-                    chat_frame.insertItem(i,f'{local_chat_history[i]}')
-
-
+    #alters the chat frame on the gui on each timeout signal
+    #prints any changes between the server and client chat
     def alter_chat_frame(self,server_chat_list):
-        self.chat_frame = QListWidget()
-        print(server_chat_list)
+
+
         for i in server_chat_list:
-            self.chat_frame.addItem(i)
-
-            
-
-
-
-
-
-
-
+            self.chat_frame.addItem(f'{i[1]} says: {i[0]} \n')
+        
+        self.layout().addWidget(self.chat_frame)
+        
 
     #starts a thread responsible for sending the chat messages to the server
     def send_values(self,chat):
@@ -240,6 +207,7 @@ class MainWindow(qtw.QWidget):
         self.workerTwo.finished.connect(self.workerTwo.deleteLater)
         self.threadTwo.finished.connect(self.threadTwo.deleteLater)
         self.workerTwo.chat.connect(self.alter_chat_frame)
+        # self.alter_chat_frame(self.workerTwo)
         self.threadTwo.start()
 
 
