@@ -21,6 +21,7 @@ class ChatWorker(QObject):
     
 
     def __init__(self,client_socket,connected,message):
+
         super().__init__()
         self.client_socket = client_socket
         self.connected = connected
@@ -28,31 +29,27 @@ class ChatWorker(QObject):
         
 
     def run(self):
-        """Long-running task."""
+        
         if self.connected:
+
             string_buffer = self.message.encode(FORMAT)
             length = str(len(string_buffer))
             length_buffer = length.encode(FORMAT)
-            # print(length_buffer)
-            # print(string_buffer)
             length_buffer += b' '*(HEADER - len(length_buffer)) #pad one byte space to the buffer for every byte below the header size
-            # print(f'length buffer after padding: {len(length_buffer)}')
             self.client_socket.send(length_buffer)
             self.client_socket.send(string_buffer)
             
-
         self.finished.emit()
 
     #retrieves the chat from server and emits it as a signal
     def retrieve_chat(self):
-        print("inside retrieve chat")
+
         updated_chat = self.ping()
-        print("updated chat",type(updated_chat))
-        
         self.chat.emit(updated_chat)
         self.finished.emit()
 
     #pings server for server chat, compares it to current chat and returns it as a list
+    #if there are no differences, noone has written anything and it will return an empty list
     def ping(self):
         
         msg = '!PING'
@@ -67,19 +64,12 @@ class ChatWorker(QObject):
         compared_chat = self.compare_local_server_chat(chat_content) #compares local and server chat to return a list of new messages
 
         if compared_chat:
-            # nice_tuples(compared_chat)
             return compared_chat
+
         else:
             return []
 
-            
-    #prints chat out in nice format
-    def nice_tuples(self,list_of_tuples):
-
-        for i in list_of_tuples:
-            print(f'{i[1]} says: {i[0]}')
-
-
+        
     #sets the local chat to the server chat
     def update_local_chat(self,updated_chat):
 
@@ -102,9 +92,6 @@ class ChatWorker(QObject):
                     new_messages_list.append(i)
 
         self.update_local_chat(server_chat)#updates the local chat to be equal to that of the server after retrieving new messages
-
-
-        print("new message list is:" , new_messages_list)
         return new_messages_list
 
 
@@ -115,56 +102,49 @@ class MainWindow(qtw.QWidget):
     #initialises the window with labels and a text box
     def __init__(self):
 
-        
+        #initialise the client_socket for communication
         self.client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.client_socket.connect((HOST,PORT))
         self.connected = True
 
-    
         super().__init__()
 
         #window title
         self.setWindowTitle("python chat client")
 
+
         #layout
         self.setLayout(qtw.QVBoxLayout())
 
-        #change font of the label
 
-        #create a text input
-
+        #adds appropriate buttons and text inputs
         text_input = qtw.QLineEdit()
         text_input.setObjectName("text_field")
         text_input.setText("")
         self.chat_frame = QListWidget()
 
-        print("at timer")
 
+        #initialises and starts a timer 
+        #timer emits a signal every 1000 miliseconds that calls a function to 
+        #retrieve the server chat, compare and update the local chat for view on gui
         self.timer = QTimer()
-        
         self.timer.timeout.connect(self.retrieve_server_chat)
         self.timer.start(1000)
         
 
-        print("after time")
-
-        
         #create a button to send message
         send_button = qtw.QPushButton("Send",clicked = lambda: send())
 
-        #set the chat frame
+        #the chat frame is the viewable chat window
         chat_frame = qtw.QListWidget()
 
-
-        
+        #adds the widgets created above to the layout
         self.layout().addWidget(text_input)
         self.layout().addWidget(send_button)
         
-
+        #shows the gui
         self.show()
         
-
-
         #sets the showing label to the text input and clears the text input
         def send():
             self.send_values(text_input.text())
@@ -174,7 +154,6 @@ class MainWindow(qtw.QWidget):
     #alters the chat frame on the gui on each timeout signal
     #prints any changes between the server and client chat
     def alter_chat_frame(self,server_chat_list):
-
 
         for i in server_chat_list:
             self.chat_frame.addItem(f'{i[1]} says: {i[0]} \n')
@@ -195,8 +174,11 @@ class MainWindow(qtw.QWidget):
         self.threadOne.finished.connect(self.threadOne.deleteLater)
         self.threadOne.start()
 
+
+    #starts thread responsible for checking the differences between local chat 
+    #and server chat, updating the local chat accordingly
     def retrieve_server_chat(self):
-        print("at retrieve server chat")
+
         self.threadTwo = QThread()
         self.workerTwo = ChatWorker(self.client_socket,self.connected,"none")
         self.workerTwo.moveToThread(self.threadTwo)
@@ -207,7 +189,6 @@ class MainWindow(qtw.QWidget):
         self.workerTwo.finished.connect(self.workerTwo.deleteLater)
         self.threadTwo.finished.connect(self.threadTwo.deleteLater)
         self.workerTwo.chat.connect(self.alter_chat_frame)
-        # self.alter_chat_frame(self.workerTwo)
         self.threadTwo.start()
 
 
