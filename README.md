@@ -36,7 +36,7 @@ Learning Objectives:
  5. install all required dependencies $ pip install -r requirements.txt
  6. run the server: python server.py
  7. Run client(s) using the gui: $ python guiclient.py
-            or the command line: $ python client.py
+            - or the command line: $ python client.py
  8. Enjoy
  
  
