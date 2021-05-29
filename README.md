@@ -16,15 +16,15 @@ Learning Objectives:
   - packaging and depackaging streams of information (pickle)
   
 3. Basic, hands on pyqt5 experience
-  -Event driven development
-  -Widgets, Windows and QT classes and how they interact with each other
-  -custom signals and slots
-  -QTimer for refreshing certain widgets on timeout
+  - event driven development
+  - Widgets, Windows and QT classes and how they interact with each other
+  - custom signals and slots
+  - QTimer for refreshing certain widgets on timeout
   
 4. Basics of multithreading and it's importance
-  -Avoidance of race conditions and corrupting data
-  -Locking
-  -How to use QThreads
+  - avoidance of race conditions and corrupting data
+  - locking
+  - how to use QThreads
   
  
  Installation instructions:
